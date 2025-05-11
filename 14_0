@@ -1,0 +1,327 @@
+#include <iostream>
+#include <stdexcept>
+#include <cmath>
+#include <iomanip>
+#include <locale>
+#include <windows.h> 
+
+
+// Клас 3D вектору
+class Vector3D {
+private:
+    double coords[3]; // координати вектору (x, y, z)
+
+public:
+   
+    Vector3D(double x = 0.0, double y = 0.0, double z = 0.0) {
+        coords[0] = x;
+        coords[1] = y;
+        coords[2] = z;
+    }
+
+   
+    double& operator[](int index) {
+        if (index < 0 || index > 2) {
+            throw std::out_of_range("Індекс повинен бути 0, 1 або 2");
+        }
+        return coords[index];
+    }
+
+
+    const double& operator[](int index) const {
+        if (index < 0 || index > 2) {
+            throw std::out_of_range("Індекс повинен бути 0, 1 або 2");
+        }
+        return coords[index];
+    }
+
+    // Оператор додавання
+    Vector3D operator+(const Vector3D& other) const {
+        return Vector3D(
+            coords[0] + other.coords[0],
+            coords[1] + other.coords[1],
+            coords[2] + other.coords[2]
+        );
+    }
+
+    // Оператор віднімання
+    Vector3D operator-(const Vector3D& other) const {
+        return Vector3D(
+            coords[0] - other.coords[0],
+            coords[1] - other.coords[1],
+            coords[2] - other.coords[2]
+        );
+    }
+
+    // Скалярний добуток
+    double operator*(const Vector3D& other) const {
+        return coords[0] * other.coords[0] +
+            coords[1] * other.coords[1] +
+            coords[2] * other.coords[2];
+    }
+
+    // Множення на скаляр
+    Vector3D operator*(double scalar) const {
+        return Vector3D(
+            coords[0] * scalar,
+            coords[1] * scalar,
+            coords[2] * scalar
+        );
+    }
+
+    // Векторний добуток
+    Vector3D cross(const Vector3D& other) const {
+        return Vector3D(
+            coords[1] * other.coords[2] - coords[2] * other.coords[1],
+            coords[2] * other.coords[0] - coords[0] * other.coords[2],
+            coords[0] * other.coords[1] - coords[1] * other.coords[0]
+        );
+    }
+
+    // Виведення вектора
+    friend std::ostream& operator<<(std::ostream& os, const Vector3D& v) {
+        os << "(" << v.coords[0] << ", " << v.coords[1] << ", " << v.coords[2] << ")";
+        return os;
+    }
+};
+
+// Множення скаляра на вектор 
+Vector3D operator*(double scalar, const Vector3D& v) {
+    return v * scalar;
+}
+
+
+class Matrix {
+private:
+    int rows;
+    int cols;
+    double** data;
+
+public:
+   
+    Matrix(int r, int c) : rows(r), cols(c) {
+        if (r <= 0 || c <= 0) {
+            throw std::invalid_argument("Розміри матриці повинні бути додатніми");
+        }
+
+   
+        data = new double* [rows];
+        for (int i = 0; i < rows; i++) {
+            data[i] = new double[cols];
+            for (int j = 0; j < cols; j++) {
+                data[i][j] = 0.0;
+            }
+        }
+    }
+
+  
+    Matrix(const Matrix& other) : rows(other.rows), cols(other.cols) {
+        data = new double* [rows];
+        for (int i = 0; i < rows; i++) {
+            data[i] = new double[cols];
+            for (int j = 0; j < cols; j++) {
+                data[i][j] = other.data[i][j];
+            }
+        }
+    }
+
+
+    ~Matrix() {
+        for (int i = 0; i < rows; i++) {
+            delete[] data[i];
+        }
+        delete[] data;
+    }
+
+    Matrix& operator=(const Matrix& other) {
+        if (this == &other) {
+            return *this;
+        }
+
+    
+        for (int i = 0; i < rows; i++) {
+            delete[] data[i];
+        }
+        delete[] data;
+
+ 
+        rows = other.rows;
+        cols = other.cols;
+        data = new double* [rows];
+        for (int i = 0; i < rows; i++) {
+            data[i] = new double[cols];
+            for (int j = 0; j < cols; j++) {
+                data[i][j] = other.data[i][j];
+            }
+        }
+        return *this;
+    }
+
+
+    double& operator()(int row, int col) {
+        if (row < 0 || row >= rows || col < 0 || col >= cols) {
+            throw std::out_of_range("Індекси поза межами матриці");
+        }
+        return data[row][col];
+    }
+
+
+    const double& operator()(int row, int col) const {
+        if (row < 0 || row >= rows || col < 0 || col >= cols) {
+            throw std::out_of_range("Індекси поза межами матриці");
+        }
+        return data[row][col];
+    }
+
+
+    Matrix operator+(const Matrix& other) const {
+        if (rows != other.rows || cols != other.cols) {
+            throw std::invalid_argument("Розміри матриць повинні збігатися");
+        }
+
+        Matrix result(rows, cols);
+        for (int i = 0; i < rows; i++) {
+            for (int j = 0; j < cols; j++) {
+                result.data[i][j] = data[i][j] + other.data[i][j];
+            }
+        }
+        return result;
+    }
+
+    // Віднімання матриць
+    Matrix operator-(const Matrix& other) const {
+        if (rows != other.rows || cols != other.cols) {
+            throw std::invalid_argument("Розміри матриць повинні збігатися");
+        }
+
+        Matrix result(rows, cols);
+        for (int i = 0; i < rows; i++) {
+            for (int j = 0; j < cols; j++) {
+                result.data[i][j] = data[i][j] - other.data[i][j];
+            }
+        }
+        return result;
+    }
+
+    // Множення матриць
+    Matrix operator*(const Matrix& other) const {
+        if (cols != other.rows) {
+            throw std::invalid_argument("Невідповідні розміри матриць для множення");
+        }
+
+        Matrix result(rows, other.cols);
+        for (int i = 0; i < rows; i++) {
+            for (int j = 0; j < other.cols; j++) {
+                for (int k = 0; k < cols; k++) {
+                    result.data[i][j] += data[i][k] * other.data[k][j];
+                }
+            }
+        }
+        return result;
+    }
+
+    // Множення матриці на скаляр
+    Matrix operator*(double scalar) const {
+        Matrix result(rows, cols);
+        for (int i = 0; i < rows; i++) {
+            for (int j = 0; j < cols; j++) {
+                result.data[i][j] = data[i][j] * scalar;
+            }
+        }
+        return result;
+    }
+
+    // Виведення матриці
+    friend std::ostream& operator<<(std::ostream& os, const Matrix& m) {
+        for (int i = 0; i < m.rows; i++) {
+            os << "[ ";
+            for (int j = 0; j < m.cols; j++) {
+                os << m.data[i][j];
+                if (j < m.cols - 1) os << ", ";
+            }
+            os << " ]";
+            if (i < m.rows - 1) os << std::endl;
+        }
+        return os;
+    }
+};
+
+// Множення скаляра на матрицю
+Matrix operator*(double scalar, const Matrix& m) {
+    return m * scalar;
+}
+
+
+int main() {
+#ifdef _WIN32
+    SetConsoleCP(1251);
+    SetConsoleOutputCP(1251);
+    setlocale(LC_ALL, "Ukrainian_Ukraine.1251");
+#else
+    setlocale(LC_ALL, "uk_UA.UTF-8");
+#endif
+    try {
+
+        std::cout << "Демонстрація роботи з векторами:" << std::endl;
+        Vector3D v1(1.0, 2.0, 3.0);
+        Vector3D v2(4.0, 5.0, 6.0);
+
+        std::cout << "v1 = " << v1 << std::endl;
+        std::cout << "v2 = " << v2 << std::endl;
+
+   
+        std::cout << "v1[0] = " << v1[0] << std::endl;
+        v1[1] = 10.0;
+        std::cout << "Після зміни v1[1] = 10.0: v1 = " << v1 << std::endl;
+
+  
+        std::cout << "v1 + v2 = " << v1 + v2 << std::endl;
+        std::cout << "v1 - v2 = " << v1 - v2 << std::endl;
+        std::cout << "v1 * v2 (скалярний добуток) = " << (v1 * v2) << std::endl;
+        std::cout << "v1 * 2.0 = " << v1 * 2.0 << std::endl;
+        std::cout << "2.0 * v1 = " << 2.0 * v1 << std::endl;
+        std::cout << "v1.cross(v2) = " << v1.cross(v2) << std::endl;
+
+    
+        std::cout << "\nДемонстрація роботи з матрицями:" << std::endl;
+        Matrix m1(2, 3);
+        Matrix m2(3, 2);
+
+      
+        m1(0, 0) = 1.0; m1(0, 1) = 2.0; m1(0, 2) = 3.0;
+        m1(1, 0) = 4.0; m1(1, 1) = 5.0; m1(1, 2) = 6.0;
+
+        m2(0, 0) = 7.0; m2(0, 1) = 8.0;
+        m2(1, 0) = 9.0; m2(1, 1) = 10.0;
+        m2(2, 0) = 11.0; m2(2, 1) = 12.0;
+
+        std::cout << "m1 = \n" << m1 << std::endl;
+        std::cout << "m2 = \n" << m2 << std::endl;
+
+
+     
+        std::cout << "m1(0, 1) = " << m1(0, 1) << std::endl;
+        m1(1, 2) = 20.0;
+        std::cout << "Після зміни m1(1, 2) = 20.0: \n" << m1 << std::endl;
+
+      
+        Matrix m3 = m1 * m2;
+        std::cout << "m1 * m2 = \n" << m3 << std::endl;
+
+        Matrix m4(2, 3);
+        m4(0, 0) = 2.0; m4(0, 1) = 3.0; m4(0, 2) = 4.0;
+        m4(1, 0) = 5.0; m4(1, 1) = 6.0; m4(1, 2) = 7.0;
+
+        std::cout << "m4 = \n" << m4 << std::endl;
+        std::cout << "m1 + m4 = \n" << m1 + m4 << std::endl;
+        std::cout << "m1 - m4 = \n" << m1 - m4 << std::endl;
+        std::cout << "m1 * 2.0 = \n" << m1 * 2.0 << std::endl;
+        std::cout << "3.0 * m1 = \n" << 3.0 * m1 << std::endl;
+
+    }
+    catch (const std::exception& e) {
+        std::cerr << "Помилка: " << e.what() << std::endl;
+    }
+
+    return 0;
+}
