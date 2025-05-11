@@ -1,0 +1,145 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <locale.h>
+#include <windows.h>
+
+class Set {
+private:
+    std::vector<int> elements; 
+
+
+    void normalize() {
+        std::sort(elements.begin(), elements.end());
+        auto last = std::unique(elements.begin(), elements.end());
+        elements.erase(last, elements.end());
+    }
+
+public:
+    
+    Set() {}
+
+   
+    Set(const std::vector<int>& elems) : elements(elems) {
+        normalize();
+    }
+
+  
+    Set(std::initializer_list<int> elems) : elements(elems) {
+        normalize();
+    }
+
+
+    void add(int element) {
+        if (!contains(element)) {
+            elements.push_back(element);
+            normalize();
+        }
+    }
+
+
+    void remove(int element) {
+        auto it = std::find(elements.begin(), elements.end(), element);
+        if (it != elements.end()) {
+            elements.erase(it);
+        }
+    }
+
+
+    bool contains(int element) const {
+        return std::find(elements.begin(), elements.end(), element) != elements.end();
+    }
+
+    
+    size_t size() const {
+        return elements.size();
+    }
+
+
+    bool isEmpty() const {
+        return elements.empty();
+    }
+
+  
+    const std::vector<int>& getElements() const {
+        return elements;
+    }
+
+
+    Set operator+(const Set& other) const {
+        Set result = *this;
+        for (int elem : other.elements) {
+            result.add(elem);
+        }
+        return result;
+    }
+
+
+    Set operator*(const Set& other) const {
+        Set result;
+        for (int elem : elements) {
+            if (other.contains(elem)) {
+                result.add(elem);
+            }
+        }
+        return result;
+    }
+
+
+    bool operator==(const Set& other) const {
+        if (size() != other.size()) {
+            return false;
+        }
+        for (int elem : elements) {
+            if (!other.contains(elem)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    
+    bool operator!=(const Set& other) const {
+        return !(*this == other);
+    }
+
+    // Виведення множини
+    friend std::ostream& operator<<(std::ostream& os, const Set& set) {
+        os << "{ ";
+        for (size_t i = 0; i < set.elements.size(); ++i) {
+            os << set.elements[i];
+            if (i < set.elements.size() - 1) {
+                os << ", ";
+            }
+        }
+        os << " }";
+        return os;
+    }
+};
+
+
+int main() {
+#ifdef _WIN32
+    SetConsoleCP(1251);
+    SetConsoleOutputCP(1251);
+    setlocale(LC_ALL, "Ukrainian_Ukraine.1251");
+#else
+    setlocale(LC_ALL, "uk_UA.UTF-8");
+#endif
+    Set set1 = { 1, 2, 3, 4, 5 };
+    Set set2 = { 4, 5, 6, 7, 8 };
+
+    std::cout << "Множина 1: " << set1 << std::endl;
+    std::cout << "Множина 2: " << set2 << std::endl;
+
+    Set unionSet = set1 + set2;
+    std::cout << "Об'єднання (множина1 + множина2): " << unionSet << std::endl;
+
+    Set intersectionSet = set1 * set2;
+    std::cout << "Перетин (множина1 * множина2): " << intersectionSet << std::endl;
+
+    std::cout << "множина1 == множина2: " << (set1 == set2 ? "істина" : "хибність") << std::endl;
+    std::cout << "множина1 != множина2: " << (set1 != set2 ? "істина" : "хибність") << std::endl;
+
+    return 0;
+}
